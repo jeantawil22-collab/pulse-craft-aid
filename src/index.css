@@ -2,6 +2,131 @@
 @tailwind components;
 @tailwind utilities;
 
+/* AI Fitness App Design System */
+@layer base {
+  :root {
+    /* Core Brand Colors */
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
+    
+    /* Fitness Primary Colors */
+    --primary: 142 76% 36%;  /* Energetic Green */
+    --primary-foreground: 0 0% 98%;
+    --primary-glow: 142 70% 50%;
+    
+    /* Secondary Colors */
+    --secondary: 220 14.3% 95.9%;
+    --secondary-foreground: 220.9 39.3% 11%;
+    
+    /* Accent Colors */
+    --accent: 39 77% 58%;  /* Motivational Orange */
+    --accent-foreground: 0 0% 98%;
+    
+    /* Nutrition Colors */
+    --nutrition: 270 95% 75%;  /* Purple for nutrition */
+    --nutrition-foreground: 0 0% 98%;
+    
+    /* Progress Colors */
+    --progress: 217 91% 60%;  /* Blue for progress */
+    --progress-foreground: 0 0% 98%;
+    
+    /* Success/Warning/Error */
+    --success: 120 60% 50%;
+    --warning: 38 92% 50%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+    
+    /* UI Elements */
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 84% 4.9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 84% 4.9%;
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 142 76% 36%;
+    
+    /* Gradients */
+    --gradient-primary: linear-gradient(135deg, hsl(142 76% 36%), hsl(142 70% 50%));
+    --gradient-accent: linear-gradient(135deg, hsl(39 77% 58%), hsl(45 86% 62%));
+    --gradient-nutrition: linear-gradient(135deg, hsl(270 95% 75%), hsl(280 87% 65%));
+    --gradient-progress: linear-gradient(135deg, hsl(217 91% 60%), hsl(227 87% 65%));
+    --gradient-hero: linear-gradient(135deg, hsl(142 76% 36%), hsl(217 91% 60%));
+    
+    /* Shadows */
+    --shadow-fitness: 0 10px 30px -10px hsl(142 76% 36% / 0.3);
+    --shadow-nutrition: 0 10px 30px -10px hsl(270 95% 75% / 0.3);
+    --shadow-glow: 0 0 40px hsl(142 70% 50% / 0.4);
+    
+    /* Radius */
+    --radius: 0.75rem;
+    
+    /* Animations */
+    --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .dark {
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+    --card: 222.2 84% 4.9%;
+    --card-foreground: 210 40% 98%;
+    --popover: 222.2 84% 4.9%;
+    --popover-foreground: 210 40% 98%;
+    --primary: 142 70% 50%;
+    --primary-foreground: 222.2 84% 4.9%;
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+    --accent: 39 77% 58%;
+    --accent-foreground: 222.2 84% 4.9%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 142 70% 50%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+}
+
+@layer utilities {
+  .gradient-primary {
+    background: var(--gradient-primary);
+  }
+  .gradient-accent {
+    background: var(--gradient-accent);
+  }
+  .gradient-nutrition {
+    background: var(--gradient-nutrition);
+  }
+  .gradient-progress {
+    background: var(--gradient-progress);
+  }
+  .gradient-hero {
+    background: var(--gradient-hero);
+  }
+  .shadow-fitness {
+    box-shadow: var(--shadow-fitness);
+  }
+  .shadow-nutrition {
+    box-shadow: var(--shadow-nutrition);
+  }
+  .shadow-glow {
+    box-shadow: var(--shadow-glow);
+  }
+}
+@tailwind utilities;
+
 /* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
 All colors MUST be HSL.
 */
