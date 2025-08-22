@@ -7,7 +7,11 @@ import {
   Camera, 
   TrendingUp, 
   User,
-  Menu
+  Menu,
+  Brain,
+  BarChart3,
+  Sparkles,
+  Users
 } from 'lucide-react';
 
 import {
@@ -54,6 +58,30 @@ const navigationItems = [
     url: "/progress",
     icon: TrendingUp,
     description: "Analytics & Insights"
+  },
+  {
+    title: "AI Coach",
+    url: "/ai-coach",
+    icon: Brain,
+    description: "Personal AI Fitness Coach"
+  },
+  {
+    title: "Analytics",
+    url: "/analytics",
+    icon: BarChart3,
+    description: "Advanced Performance Data"
+  },
+  {
+    title: "Recommendations",
+    url: "/recommendations",
+    icon: Sparkles,
+    description: "Smart AI Suggestions"
+  },
+  {
+    title: "Social Hub",
+    url: "/social",
+    icon: Users,
+    description: "Community & Challenges"
   },
   {
     title: "Profile",

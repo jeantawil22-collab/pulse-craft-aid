@@ -12,6 +12,10 @@ import { Nutrition } from '@/pages/Nutrition';
 import { MealScanner } from '@/pages/MealScanner';
 import { Progress } from '@/pages/Progress';
 import { Profile } from '@/pages/Profile';
+import { AICoach } from '@/components/AICoach';
+import { AdvancedAnalytics } from '@/components/AdvancedAnalytics';
+import { SmartRecommendations } from '@/components/SmartRecommendations';
+import { SocialHub } from '@/components/SocialHub';
 
 // Types
 interface UserProfile {
@@ -86,6 +90,10 @@ const FitnessApp: React.FC = () => {
             <Route path="/nutrition" element={<Nutrition user={user} />} />
             <Route path="/meal-scanner" element={<MealScanner user={user} />} />
             <Route path="/progress" element={<Progress user={user} />} />
+            <Route path="/ai-coach" element={<AICoach user={user} />} />
+            <Route path="/analytics" element={<AdvancedAnalytics user={user} />} />
+            <Route path="/recommendations" element={<SmartRecommendations user={user} />} />
+            <Route path="/social" element={<SocialHub user={user} />} />
             <Route path="/profile" element={<Profile user={user} updateUser={updateUser} />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
