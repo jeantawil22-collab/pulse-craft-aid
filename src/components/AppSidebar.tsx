@@ -11,7 +11,13 @@ import {
   Brain,
   BarChart3,
   Sparkles,
-  Users
+  Users,
+  Watch,
+  Video,
+  Moon,
+  ChefHat,
+  Eye,
+  Activity as ActivityIcon
 } from 'lucide-react';
 
 import {
@@ -82,6 +88,42 @@ const navigationItems = [
     url: "/social",
     icon: Users,
     description: "Community & Challenges"
+  },
+  {
+    title: "Wearables",
+    url: "/wearables",
+    icon: Watch,
+    description: "Device Integration & Sync"
+  },
+  {
+    title: "Live Classes",
+    url: "/live-classes",
+    icon: Video,
+    description: "Real-time Group Workouts"
+  },
+  {
+    title: "Recovery Hub",
+    url: "/recovery",
+    icon: Moon,
+    description: "Sleep & Recovery Optimization"
+  },
+  {
+    title: "Smart Nutrition",
+    url: "/smart-nutrition",
+    icon: ChefHat,
+    description: "AI Meal Planning & Shopping"
+  },
+  {
+    title: "AR Workouts",
+    url: "/ar-workouts",
+    icon: Eye,
+    description: "Augmented Reality Training"
+  },
+  {
+    title: "Biometrics",
+    url: "/biometrics",
+    icon: ActivityIcon,
+    description: "Real-time Health Monitoring"
   },
   {
     title: "Profile",

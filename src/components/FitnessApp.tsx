@@ -16,6 +16,12 @@ import { AICoach } from '@/components/AICoach';
 import { AdvancedAnalytics } from '@/components/AdvancedAnalytics';
 import { SmartRecommendations } from '@/components/SmartRecommendations';
 import { SocialHub } from '@/components/SocialHub';
+import WearableIntegration from '@/components/WearableIntegration';
+import LiveClasses from '@/components/LiveClasses';
+import RecoveryHub from '@/components/RecoveryHub';
+import SmartNutrition from '@/components/SmartNutrition';
+import ARWorkouts from '@/components/ARWorkouts';
+import BiometricMonitoring from '@/components/BiometricMonitoring';
 
 // Types
 interface UserProfile {
@@ -94,6 +100,12 @@ const FitnessApp: React.FC = () => {
             <Route path="/analytics" element={<AdvancedAnalytics user={user} />} />
             <Route path="/recommendations" element={<SmartRecommendations user={user} />} />
             <Route path="/social" element={<SocialHub user={user} />} />
+            <Route path="/wearables" element={<WearableIntegration user={user} />} />
+            <Route path="/live-classes" element={<LiveClasses user={user} />} />
+            <Route path="/recovery" element={<RecoveryHub user={user} />} />
+            <Route path="/smart-nutrition" element={<SmartNutrition user={user} />} />
+            <Route path="/ar-workouts" element={<ARWorkouts user={user} />} />
+            <Route path="/biometrics" element={<BiometricMonitoring user={user} />} />
             <Route path="/profile" element={<Profile user={user} updateUser={updateUser} />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
