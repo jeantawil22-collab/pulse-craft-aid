@@ -3,6 +3,8 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from "@/components/ui/toaster";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { useLocalStorage } from '@/hooks/useLocalStorage';
+import { ErrorBoundary } from '@/components/ErrorBoundary';
+import { PWAInstaller } from '@/components/PWAInstaller';
 
 // Performance optimized imports - lazy loading for better initial load
 import { AppSidebar } from '@/components/AppSidebar';
@@ -95,35 +97,38 @@ const FitnessApp: React.FC = () => {
   }
 
   return (
-    <SidebarProvider>
-      <div className="min-h-screen flex w-full bg-background">
-        <AppSidebar />
-        <main className="flex-1 overflow-auto">
-          <Suspense fallback={<LoadingFallback />}>
-            <Routes>
-              <Route path="/" element={<Dashboard user={user} />} />
-              <Route path="/workouts" element={<Workouts user={user} />} />
-              <Route path="/nutrition" element={<Nutrition user={user} />} />
-              <Route path="/meal-scanner" element={<MealScanner user={user} />} />
-              <Route path="/progress" element={<Progress user={user} />} />
-              <Route path="/ai-coach" element={<AICoach user={user} />} />
-              <Route path="/analytics" element={<AdvancedAnalytics user={user} />} />
-              <Route path="/recommendations" element={<SmartRecommendations user={user} />} />
-              <Route path="/social" element={<SocialHub user={user} />} />
-              <Route path="/wearables" element={<WearableIntegration user={user} />} />
-              <Route path="/live-classes" element={<LiveClasses user={user} />} />
-              <Route path="/recovery" element={<RecoveryHub user={user} />} />
-              <Route path="/smart-nutrition" element={<SmartNutrition user={user} />} />
-              <Route path="/ar-workouts" element={<ARWorkouts user={user} />} />
-              <Route path="/biometrics" element={<BiometricMonitoring user={user} />} />
-              <Route path="/profile" element={<Profile user={user} updateUser={updateUser} />} />
-              <Route path="*" element={<Navigate to="/" replace />} />
-            </Routes>
-          </Suspense>
-        </main>
-        <Toaster />
-      </div>
-    </SidebarProvider>
+    <ErrorBoundary>
+      <SidebarProvider>
+        <div className="min-h-screen flex w-full bg-background">
+          <AppSidebar />
+          <main className="flex-1 overflow-auto">
+            <Suspense fallback={<LoadingFallback />}>
+              <Routes>
+                <Route path="/" element={<Dashboard user={user} />} />
+                <Route path="/workouts" element={<Workouts user={user} />} />
+                <Route path="/nutrition" element={<Nutrition user={user} />} />
+                <Route path="/meal-scanner" element={<MealScanner user={user} />} />
+                <Route path="/progress" element={<Progress user={user} />} />
+                <Route path="/ai-coach" element={<AICoach user={user} />} />
+                <Route path="/analytics" element={<AdvancedAnalytics user={user} />} />
+                <Route path="/recommendations" element={<SmartRecommendations user={user} />} />
+                <Route path="/social" element={<SocialHub user={user} />} />
+                <Route path="/wearables" element={<WearableIntegration user={user} />} />
+                <Route path="/live-classes" element={<LiveClasses user={user} />} />
+                <Route path="/recovery" element={<RecoveryHub user={user} />} />
+                <Route path="/smart-nutrition" element={<SmartNutrition user={user} />} />
+                <Route path="/ar-workouts" element={<ARWorkouts user={user} />} />
+                <Route path="/biometrics" element={<BiometricMonitoring user={user} />} />
+                <Route path="/profile" element={<Profile user={user} updateUser={updateUser} />} />
+                <Route path="*" element={<Navigate to="/" replace />} />
+              </Routes>
+            </Suspense>
+          </main>
+          <Toaster />
+          <PWAInstaller />
+        </div>
+      </SidebarProvider>
+    </ErrorBoundary>
   );
 };
 
