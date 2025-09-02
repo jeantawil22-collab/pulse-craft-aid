@@ -14,7 +14,329 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      ai_recommendations: {
+        Row: {
+          confidence_score: number | null
+          created_at: string | null
+          data: Json | null
+          description: string | null
+          expires_at: string | null
+          id: string
+          is_applied: boolean | null
+          recommendation_type: string
+          title: string
+          user_id: string
+        }
+        Insert: {
+          confidence_score?: number | null
+          created_at?: string | null
+          data?: Json | null
+          description?: string | null
+          expires_at?: string | null
+          id?: string
+          is_applied?: boolean | null
+          recommendation_type: string
+          title: string
+          user_id: string
+        }
+        Update: {
+          confidence_score?: number | null
+          created_at?: string | null
+          data?: Json | null
+          description?: string | null
+          expires_at?: string | null
+          id?: string
+          is_applied?: boolean | null
+          recommendation_type?: string
+          title?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      biometric_data: {
+        Row: {
+          created_at: string | null
+          data_type: string
+          device_id: string | null
+          id: string
+          recorded_at: string | null
+          unit: string
+          user_id: string
+          value: number
+        }
+        Insert: {
+          created_at?: string | null
+          data_type: string
+          device_id?: string | null
+          id?: string
+          recorded_at?: string | null
+          unit: string
+          user_id: string
+          value: number
+        }
+        Update: {
+          created_at?: string | null
+          data_type?: string
+          device_id?: string | null
+          id?: string
+          recorded_at?: string | null
+          unit?: string
+          user_id?: string
+          value?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "biometric_data_device_id_fkey"
+            columns: ["device_id"]
+            isOneToOne: false
+            referencedRelation: "wearable_devices"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      nutrition_log: {
+        Row: {
+          ai_analyzed: boolean | null
+          created_at: string | null
+          food_items: Json
+          id: string
+          logged_at: string | null
+          macronutrients: Json | null
+          meal_type: string | null
+          total_calories: number | null
+          user_id: string
+        }
+        Insert: {
+          ai_analyzed?: boolean | null
+          created_at?: string | null
+          food_items: Json
+          id?: string
+          logged_at?: string | null
+          macronutrients?: Json | null
+          meal_type?: string | null
+          total_calories?: number | null
+          user_id: string
+        }
+        Update: {
+          ai_analyzed?: boolean | null
+          created_at?: string | null
+          food_items?: Json
+          id?: string
+          logged_at?: string | null
+          macronutrients?: Json | null
+          meal_type?: string | null
+          total_calories?: number | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          age: number | null
+          created_at: string | null
+          dietary_restrictions: string[] | null
+          first_name: string | null
+          fitness_goals: string[] | null
+          fitness_level: string | null
+          height: number | null
+          id: string
+          last_name: string | null
+          preferred_language: string | null
+          timezone: string | null
+          units: string | null
+          updated_at: string | null
+          user_id: string
+          weight: number | null
+        }
+        Insert: {
+          age?: number | null
+          created_at?: string | null
+          dietary_restrictions?: string[] | null
+          first_name?: string | null
+          fitness_goals?: string[] | null
+          fitness_level?: string | null
+          height?: number | null
+          id?: string
+          last_name?: string | null
+          preferred_language?: string | null
+          timezone?: string | null
+          units?: string | null
+          updated_at?: string | null
+          user_id: string
+          weight?: number | null
+        }
+        Update: {
+          age?: number | null
+          created_at?: string | null
+          dietary_restrictions?: string[] | null
+          first_name?: string | null
+          fitness_goals?: string[] | null
+          fitness_level?: string | null
+          height?: number | null
+          id?: string
+          last_name?: string | null
+          preferred_language?: string | null
+          timezone?: string | null
+          units?: string | null
+          updated_at?: string | null
+          user_id?: string
+          weight?: number | null
+        }
+        Relationships: []
+      }
+      user_achievements: {
+        Row: {
+          achievement_description: string | null
+          achievement_name: string
+          achievement_type: string
+          created_at: string | null
+          earned_at: string | null
+          id: string
+          points: number | null
+          user_id: string
+        }
+        Insert: {
+          achievement_description?: string | null
+          achievement_name: string
+          achievement_type: string
+          created_at?: string | null
+          earned_at?: string | null
+          id?: string
+          points?: number | null
+          user_id: string
+        }
+        Update: {
+          achievement_description?: string | null
+          achievement_name?: string
+          achievement_type?: string
+          created_at?: string | null
+          earned_at?: string | null
+          id?: string
+          points?: number | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_progress: {
+        Row: {
+          created_at: string | null
+          current_value: number | null
+          id: string
+          metric_type: string
+          progress_percentage: number | null
+          recorded_at: string | null
+          target_value: number | null
+          unit: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          current_value?: number | null
+          id?: string
+          metric_type: string
+          progress_percentage?: number | null
+          recorded_at?: string | null
+          target_value?: number | null
+          unit?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          current_value?: number | null
+          id?: string
+          metric_type?: string
+          progress_percentage?: number | null
+          recorded_at?: string | null
+          target_value?: number | null
+          unit?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      wearable_devices: {
+        Row: {
+          battery_level: number | null
+          created_at: string | null
+          device_data: Json | null
+          device_name: string
+          device_type: string
+          id: string
+          is_connected: boolean | null
+          last_sync: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          battery_level?: number | null
+          created_at?: string | null
+          device_data?: Json | null
+          device_name: string
+          device_type: string
+          id?: string
+          is_connected?: boolean | null
+          last_sync?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          battery_level?: number | null
+          created_at?: string | null
+          device_data?: Json | null
+          device_name?: string
+          device_type?: string
+          id?: string
+          is_connected?: boolean | null
+          last_sync?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      workouts: {
+        Row: {
+          ai_generated: boolean | null
+          calories_burned: number | null
+          completed_at: string | null
+          created_at: string | null
+          duration_minutes: number | null
+          exercises: Json
+          id: string
+          intensity: string | null
+          name: string
+          type: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          ai_generated?: boolean | null
+          calories_burned?: number | null
+          completed_at?: string | null
+          created_at?: string | null
+          duration_minutes?: number | null
+          exercises: Json
+          id?: string
+          intensity?: string | null
+          name: string
+          type: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          ai_generated?: boolean | null
+          calories_burned?: number | null
+          completed_at?: string | null
+          created_at?: string | null
+          duration_minutes?: number | null
+          exercises?: Json
+          id?: string
+          intensity?: string | null
+          name?: string
+          type?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
