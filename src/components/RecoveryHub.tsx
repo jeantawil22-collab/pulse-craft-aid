@@ -1,9 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 import { 
   Moon, 
   Waves, 
@@ -38,22 +40,12 @@ interface RecoveryHubProps {
 }
 
 const RecoveryHub: React.FC<RecoveryHubProps> = ({ user }) => {
+  const { toast } = useToast();
   const [activeTab, setActiveTab] = useState('overview');
   const [isPlaying, setIsPlaying] = useState(false);
   const [selectedRecovery, setSelectedRecovery] = useState<string | null>(null);
-
-  const recoveryScore = 73;
-  const sleepQuality = 8.2;
-  const stressLevel = 34;
-  const hrv = 42;
-  const restingHR = 58;
-
-  const recoveryMetrics = [
-    { label: 'Sleep Quality', value: sleepQuality, max: 10, unit: '/10', icon: Moon, color: 'bg-nutrition' },
-    { label: 'HRV Score', value: hrv, max: 100, unit: 'ms', icon: Heart, color: 'bg-primary' },
-    { label: 'Stress Level', value: stressLevel, max: 100, unit: '%', icon: Brain, color: 'bg-accent' },
-    { label: 'Resting HR', value: restingHR, max: 100, unit: 'BPM', icon: Activity, color: 'bg-progress' }
-  ];
+  const [recoveryData, setRecoveryData] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
 
   const recoveryProtocols = [
     {
@@ -94,6 +86,152 @@ const RecoveryHub: React.FC<RecoveryHubProps> = ({ user }) => {
     }
   ];
 
+  useEffect(() => {
+    fetchRecoveryData();
+  }, []);
+
+  const fetchRecoveryData = async () => {
+    try {
+      const { data: { user: authUser } } = await supabase.auth.getUser();
+      if (!authUser) return;
+
+      // Fetch latest biometric data for recovery metrics
+      const { data: biometricData } = await supabase
+        .from('biometric_data')
+        .select('*')
+        .eq('user_id', authUser.id)
+        .order('recorded_at', { ascending: false })
+        .limit(10);
+
+      // Calculate recovery score based on HRV, sleep, and stress
+      const latestHRV = biometricData?.find(d => d.data_type === 'hrv')?.value || 42;
+      const latestStress = biometricData?.find(d => d.data_type === 'stress')?.value || 35;
+      const sleepQuality = 8.2; // Could be fetched from sleep tracking integration
+
+      const recoveryScore = Math.min(100, (latestHRV * 1.5) + (10 - latestStress / 10) * 5 + (sleepQuality * 5));
+
+      setRecoveryData({
+        recoveryScore: Math.round(recoveryScore),
+        sleepQuality,
+        stressLevel: latestStress,
+        hrv: latestHRV,
+        restingHR: biometricData?.find(d => d.data_type === 'heart_rate')?.value || 58,
+        hydration: 70 // Could be tracked separately
+      });
+    } catch (error) {
+      console.error('Error fetching recovery data:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load recovery data",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const startRecoverySession = async (protocolId: string) => {
+    try {
+      const { data: { user: authUser } } = await supabase.auth.getUser();
+      if (!authUser) return;
+
+      // Log recovery session
+      const { error } = await supabase
+        .from('user_progress')
+        .insert({
+          user_id: authUser.id,
+          metric_type: 'recovery_session',
+          current_value: 1,
+          unit: 'session',
+          recorded_at: new Date().toISOString()
+        });
+
+      if (error) throw error;
+
+      setSelectedRecovery(protocolId);
+      setIsPlaying(true);
+
+      toast({
+        title: "Recovery Session Started",
+        description: `Started ${recoveryProtocols.find(p => p.id === protocolId)?.name} session`
+      });
+    } catch (error) {
+      console.error('Error starting recovery session:', error);
+      toast({
+        title: "Error",
+        description: "Failed to start recovery session",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const stopRecoverySession = () => {
+    setSelectedRecovery(null);
+    setIsPlaying(false);
+    
+    toast({
+      title: "Session Complete",
+      description: "Great job! Your recovery session is complete."
+    });
+  };
+
+  const getRecoveryScoreColor = (score: number) => {
+    if (score >= 80) return 'text-success';
+    if (score >= 60) return 'text-warning';
+    return 'text-destructive';
+  };
+
+  if (loading) {
+    return (
+      <div className="p-6 space-y-6 bg-background min-h-screen">
+        <div className="animate-pulse space-y-4">
+          <div className="h-8 bg-muted rounded w-1/4"></div>
+          <div className="h-4 bg-muted rounded w-1/2"></div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {[1, 2, 3, 4].map((i) => (
+              <div key={i} className="h-32 bg-muted rounded"></div>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  const recoveryMetrics = [
+    { 
+      label: 'Sleep Quality', 
+      value: recoveryData?.sleepQuality || 8.2, 
+      max: 10, 
+      unit: '/10', 
+      icon: Moon, 
+      color: 'bg-nutrition' 
+    },
+    { 
+      label: 'HRV Score', 
+      value: recoveryData?.hrv || 42, 
+      max: 100, 
+      unit: 'ms', 
+      icon: Heart, 
+      color: 'bg-primary' 
+    },
+    { 
+      label: 'Stress Level', 
+      value: recoveryData?.stressLevel || 35, 
+      max: 100, 
+      unit: '%', 
+      icon: Brain, 
+      color: 'bg-accent' 
+    },
+    { 
+      label: 'Resting HR', 
+      value: recoveryData?.restingHR || 58, 
+      max: 100, 
+      unit: 'BPM', 
+      icon: Activity, 
+      color: 'bg-progress' 
+    }
+  ];
+
   const sleepOptimization = {
     bedtime: '10:30 PM',
     wakeTime: '6:30 AM',
@@ -104,22 +242,6 @@ const RecoveryHub: React.FC<RecoveryHubProps> = ({ user }) => {
       noise: 'White noise or silence',
       devices: 'No screens 1h before'
     }
-  };
-
-  const startRecoverySession = (protocolId: string) => {
-    setSelectedRecovery(protocolId);
-    setIsPlaying(true);
-  };
-
-  const stopRecoverySession = () => {
-    setSelectedRecovery(null);
-    setIsPlaying(false);
-  };
-
-  const getRecoveryScoreColor = (score: number) => {
-    if (score >= 80) return 'text-success';
-    if (score >= 60) return 'text-warning';
-    return 'text-destructive';
   };
 
   return (
@@ -156,8 +278,8 @@ const RecoveryHub: React.FC<RecoveryHubProps> = ({ user }) => {
                 <div className="absolute inset-0 rounded-full bg-gradient-to-br from-primary to-accent p-1">
                   <div className="w-full h-full rounded-full bg-background flex items-center justify-center">
                     <div className="text-center">
-                      <div className={`text-4xl font-bold ${getRecoveryScoreColor(recoveryScore)}`}>
-                        {recoveryScore}
+                      <div className={`text-4xl font-bold ${getRecoveryScoreColor(recoveryData?.recoveryScore || 73)}`}>
+                        {recoveryData?.recoveryScore || 73}
                       </div>
                       <div className="text-sm text-muted-foreground">/ 100</div>
                     </div>
@@ -209,7 +331,11 @@ const RecoveryHub: React.FC<RecoveryHubProps> = ({ user }) => {
                 Based on your metrics, focus on gentle movement and stress reduction today.
               </p>
               <div className="flex gap-2">
-                <Button variant="secondary" className="text-black">
+                <Button 
+                  variant="secondary" 
+                  className="text-black"
+                  onClick={() => startRecoverySession('breathing')}
+                >
                   <Play className="h-4 w-4 mr-2" />
                   Start Session
                 </Button>
@@ -415,14 +541,14 @@ const RecoveryHub: React.FC<RecoveryHubProps> = ({ user }) => {
             <CardContent>
               <div className="flex items-center justify-between mb-4">
                 <span>Daily Goal: 3L</span>
-                <span>Current: 2.1L</span>
+                <span>Current: {((recoveryData?.hydration || 70) / 100 * 3).toFixed(1)}L</span>
               </div>
-              <Progress value={70} className="mb-4" />
+              <Progress value={recoveryData?.hydration || 70} className="mb-4" />
               <div className="grid grid-cols-4 gap-2">
                 {[1, 2, 3, 4].map((glass) => (
                   <Button 
                     key={glass}
-                    variant={glass <= 3 ? "default" : "outline"}
+                    variant={glass <= Math.ceil((recoveryData?.hydration || 70) / 25) ? "default" : "outline"}
                     size="sm"
                     className="aspect-square"
                   >
