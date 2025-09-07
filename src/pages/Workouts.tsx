@@ -18,7 +18,7 @@ import {
   Zap
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { FormMonitoringCamera } from '@/components/FormMonitoringCamera';
+import { UltimateFormMonitor } from '@/components/UltimateFormMonitor';
 
 interface WorkoutsProps {
   user: any;
@@ -368,85 +368,91 @@ export const Workouts: React.FC<WorkoutsProps> = ({ user }) => {
           </Card>
         )}
 
-        {/* Current Exercise */}
-        {!isResting && (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-            {/* Exercise Details */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-3">
-                  <Dumbbell className="h-6 w-6 text-primary" />
-                  {currentExercise.name}
-                </CardTitle>
-                <div className="flex gap-2">
-                  {currentExercise.muscleGroups.map(muscle => (
-                    <Badge key={muscle} variant="secondary">{muscle}</Badge>
-                  ))}
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="text-center p-4 bg-muted/50 rounded-lg">
-                    <div className="text-2xl font-bold text-primary">{currentExercise.sets}</div>
-                    <div className="text-sm text-muted-foreground">Sets</div>
-                  </div>
-                  <div className="text-center p-4 bg-muted/50 rounded-lg">
-                    <div className="text-2xl font-bold text-accent">{currentExercise.reps}</div>
-                    <div className="text-sm text-muted-foreground">Reps</div>
-                  </div>
-                </div>
-
-                <div>
-                  <h4 className="font-semibold mb-3">Instructions:</h4>
-                  <ol className="space-y-2">
-                    {currentExercise.instructions.map((instruction, index) => (
-                      <li key={index} className="flex items-start gap-3">
-                        <span className="flex-shrink-0 w-6 h-6 bg-primary text-white rounded-full flex items-center justify-center text-sm font-medium">
-                          {index + 1}
-                        </span>
-                        <span>{instruction}</span>
-                      </li>
+            {/* Enhanced Layout with Virtual Trainer */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+              {/* Exercise Details */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-3">
+                    <Dumbbell className="h-6 w-6 text-primary" />
+                    {currentExercise.name}
+                  </CardTitle>
+                  <div className="flex gap-2">
+                    {currentExercise.muscleGroups.map(muscle => (
+                      <Badge key={muscle} variant="secondary">{muscle}</Badge>
                     ))}
-                  </ol>
-                </div>
+                  </div>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="text-center p-4 bg-muted/50 rounded-lg">
+                      <div className="text-2xl font-bold text-primary">{currentExercise.sets}</div>
+                      <div className="text-sm text-muted-foreground">Sets</div>
+                    </div>
+                    <div className="text-center p-4 bg-muted/50 rounded-lg">
+                      <div className="text-2xl font-bold text-accent">{currentExercise.reps}</div>
+                      <div className="text-sm text-muted-foreground">Reps</div>
+                    </div>
+                  </div>
 
-                <div className="flex gap-3">
-                  <Button 
-                    onClick={completeExercise}
-                    className="flex-1 gradient-primary text-white"
-                    size="lg"
-                  >
-                    <CheckCircle className="h-5 w-5 mr-2" />
-                    Complete Exercise
-                  </Button>
-                  {activeExercise < currentWorkout.exercises.length - 1 && (
+                  <div>
+                    <h4 className="font-semibold mb-3">Instructions:</h4>
+                    <ol className="space-y-2">
+                      {currentExercise.instructions.map((instruction, index) => (
+                        <li key={index} className="flex items-start gap-3">
+                          <span className="flex-shrink-0 w-6 h-6 bg-primary text-white rounded-full flex items-center justify-center text-sm font-medium">
+                            {index + 1}
+                          </span>
+                          <span>{instruction}</span>
+                        </li>
+                      ))}
+                    </ol>
+                  </div>
+
+                  <div className="flex gap-3">
                     <Button 
-                      variant="outline" 
-                      onClick={nextExercise}
+                      onClick={completeExercise}
+                      className="flex-1 gradient-primary text-white"
+                      size="lg"
                     >
-                      Skip Exercise
+                      <CheckCircle className="h-5 w-5 mr-2" />
+                      Complete Exercise
                     </Button>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
+                    {activeExercise < currentWorkout.exercises.length - 1 && (
+                      <Button 
+                        variant="outline" 
+                        onClick={nextExercise}
+                      >
+                        Skip Exercise
+                      </Button>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
 
-            {/* Form Monitoring Camera */}
-            <FormMonitoringCamera
-              exerciseName={currentExercise.name}
-              isActive={!isResting}
-              onFormAnalysis={(analysis) => {
-                // Handle form analysis feedback
-                if (analysis.score < 50) {
-                  toast({
-                    title: "Form Alert! ⚠️",
-                    description: analysis.issues[0] || "Check your form",
-                    variant: "destructive",
-                  });
-                }
-              }}
-            />
-          </div>
+              {/* Ultimate Form Monitor */}
+              <div className="lg:col-span-2">
+                <UltimateFormMonitor
+                  exerciseName={currentExercise.name}
+                  isActive={!isResting}
+                  onFormAnalysis={(analysis) => {
+                    // Handle advanced form analysis feedback
+                    if (analysis.perfectForm) {
+                      toast({
+                        title: "🏆 PERFECT FORM!",
+                        description: "Incredible technique! You're absolutely crushing it!",
+                      });
+                    } else if (analysis.score < 60) {
+                      toast({
+                        title: "⚡ Form Coach Alert",
+                        description: analysis.suggestions[0] || "Small adjustments will make you stronger!",
+                        variant: "destructive",
+                      });
+                    }
+                  }}
+                />
+              </div>
+            </div>
         )}
 
         {/* Exercise List */}
