@@ -453,7 +453,8 @@ export const Workouts: React.FC<WorkoutsProps> = ({ user }) => {
                 />
               </div>
             </div>
-        )}
+
+        {/* Exercise List */}
 
         {/* Exercise List */}
         <Card>
