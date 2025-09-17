@@ -22,6 +22,26 @@ import { useFormMonitoring } from '@/hooks/useFormMonitoring';
 import { usePerformanceMonitor } from '@/hooks/usePerformance';
 import { VirtualTrainer } from './VirtualTrainer';
 
+// MediaPipe types
+interface PoseLandmark {
+  x: number;
+  y: number;
+  z: number;
+  visibility: number;
+}
+
+// Global MediaPipe declarations
+declare global {
+  interface Window {
+    Pose: any;
+    Camera: any;
+    drawConnectors: any;
+    drawLandmarks: any;
+    POSE_CONNECTIONS: any;
+    POSE_LANDMARKS: any;
+  }
+}
+
 interface FormAnalysis {
   score: number;
   issues: string[];
@@ -50,6 +70,7 @@ export const UltimateFormMonitor: React.FC<UltimateFormMonitorProps> = ({
   const poseRef = useRef<any>(null);
   const cameraRef = useRef<any>(null);
   const streamRef = useRef<MediaStream | null>(null);
+  const animationFrameRef = useRef<number>();
 
   // Enhanced form monitoring hook
   const {
@@ -68,12 +89,132 @@ export const UltimateFormMonitor: React.FC<UltimateFormMonitorProps> = ({
   const [audioEnabled, setAudioEnabled] = useState(true);
   const [showOverlay, setShowOverlay] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
+  const [isPoseLoaded, setIsPoseLoaded] = useState(false);
   const [selectedTrainer, setSelectedTrainer] = useState<'motivational' | 'zen' | 'scientific'>('motivational');
 
   // Sync with parent active state
   useEffect(() => {
     setIsActive(parentIsActive);
   }, [parentIsActive, setIsActive]);
+
+  // Load MediaPipe Pose
+  const loadMediaPipe = useCallback(async () => {
+    if (isPoseLoaded) return true;
+    
+    try {
+      // Load MediaPipe scripts in sequence for reliability
+      await loadScript('https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js');
+      await loadScript('https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js');
+      await loadScript('https://cdn.jsdelivr.net/npm/@mediapipe/pose/pose.js');
+
+      if (window.Pose) {
+        setIsPoseLoaded(true);
+        return true;
+      }
+      throw new Error('MediaPipe Pose not loaded');
+    } catch (error) {
+      console.error('MediaPipe loading failed:', error);
+      toast({
+        title: "AI System Loading Failed",
+        description: "Form analysis requires MediaPipe. Please refresh and try again.",
+        variant: "destructive",
+      });
+      return false;
+    }
+  }, [isPoseLoaded, toast]);
+
+  // Helper function to load scripts
+  const loadScript = (src: string): Promise<void> => {
+    return new Promise((resolve, reject) => {
+      const script = document.createElement('script');
+      script.src = src;
+      script.onload = () => resolve();
+      script.onerror = reject;
+      document.head.appendChild(script);
+    });
+  };
+
+  // Handle pose detection results
+  const onPoseResults = useCallback((results: any) => {
+    if (!showOverlay || !canvasRef.current || !videoRef.current) return;
+
+    const canvas = canvasRef.current;
+    const video = videoRef.current;
+    const ctx = canvas.getContext('2d');
+    
+    if (!ctx) return;
+
+    // Set canvas dimensions to match video
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    
+    // Clear canvas
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    if (results.poseLandmarks && results.poseLandmarks.length > 0) {
+      // Draw pose landmarks and connections
+      if (window.drawConnectors && window.drawLandmarks) {
+        ctx.save();
+        
+        // Draw connections
+        window.drawConnectors(ctx, results.poseLandmarks, window.POSE_CONNECTIONS, {
+          color: '#00ff00',
+          lineWidth: 2
+        });
+        
+        // Draw landmarks
+        window.drawLandmarks(ctx, results.poseLandmarks, {
+          color: '#ff0000',
+          lineWidth: 1,
+          radius: 3
+        });
+        
+        ctx.restore();
+      }
+
+      // Process analysis with the pose landmarks
+      processAnalysis(results.poseLandmarks);
+    }
+  }, [processAnalysis, showOverlay]);
+
+  // Initialize pose detection system
+  const initializePoseDetection = useCallback(async () => {
+    if (!isPoseLoaded) return false;
+
+    try {
+      poseRef.current = new window.Pose({
+        locateFile: (file: string) => `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${file}`
+      });
+
+      poseRef.current.setOptions({
+        modelComplexity: performanceMetrics.isLowPerformance ? 0 : 1,
+        smoothLandmarks: true,
+        enableSegmentation: false,
+        smoothSegmentation: false,
+        minDetectionConfidence: 0.7,
+        minTrackingConfidence: 0.5
+      });
+
+      poseRef.current.onResults(onPoseResults);
+      return true;
+    } catch (error) {
+      console.error('Pose detection initialization failed:', error);
+      return false;
+    }
+  }, [isPoseLoaded, onPoseResults, performanceMetrics.isLowPerformance]);
+
+  // Process video frames for pose detection
+  const processFrame = useCallback(async () => {
+    if (!videoRef.current || !poseRef.current || !isActive || !isCameraActive) return;
+
+    try {
+      await poseRef.current.send({ image: videoRef.current });
+    } catch (error) {
+      console.error('Frame processing error:', error);
+    }
+
+    animationFrameRef.current = requestAnimationFrame(processFrame);
+  }, [isActive, isCameraActive]);
 
   // Optimized camera initialization
   const initializeCamera = useCallback(async () => {
@@ -86,7 +227,11 @@ export const UltimateFormMonitor: React.FC<UltimateFormMonitorProps> = ({
       }
 
       const stream = await navigator.mediaDevices.getUserMedia({
-        video: { width: 1280, height: 720, frameRate: 30 },
+        video: { 
+          width: { ideal: 1280 },
+          height: { ideal: 720 },
+          frameRate: { ideal: 30, max: 30 }
+        },
         audio: false
       });
       
@@ -117,23 +262,75 @@ export const UltimateFormMonitor: React.FC<UltimateFormMonitorProps> = ({
   const startMonitoring = useCallback(async () => {
     setIsLoading(true);
     
-    const cameraReady = await initializeCamera();
-    if (cameraReady) {
+    try {
+      // Load MediaPipe first
+      const mediaReady = await loadMediaPipe();
+      if (!mediaReady) {
+        setIsLoading(false);
+        return;
+      }
+
+      // Initialize camera
+      const cameraReady = await initializeCamera();
+      if (!cameraReady) {
+        setIsLoading(false);
+        return;
+      }
+
+      // Initialize pose detection
+      const poseReady = await initializePoseDetection();
+      if (!poseReady) {
+        setIsLoading(false);
+        return;
+      }
+
       setIsCameraActive(true);
+      
+      // Start frame processing
+      processFrame();
+
+      toast({
+        title: "🚀 AI Form Monitor Active!",
+        description: "Advanced pose detection is now analyzing your form in real-time.",
+      });
+    } catch (error) {
+      console.error('Monitoring initialization failed:', error);
+      toast({
+        title: "Initialization Failed",
+        description: "Please refresh the page and try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
     }
-    
-    setIsLoading(false);
-  }, [initializeCamera]);
+  }, [loadMediaPipe, initializeCamera, initializePoseDetection, processFrame, toast]);
 
   // Stop monitoring
   const stopMonitoring = useCallback(() => {
+    // Stop animation frame
+    if (animationFrameRef.current) {
+      cancelAnimationFrame(animationFrameRef.current);
+    }
+
+    // Stop camera stream
     if (streamRef.current) {
       streamRef.current.getTracks().forEach(track => track.stop());
       streamRef.current = null;
     }
     
+    // Clean up pose detection
+    if (poseRef.current) {
+      poseRef.current.close?.();
+      poseRef.current = null;
+    }
+    
     setIsCameraActive(false);
-  }, []);
+    
+    toast({
+      title: "Form Monitor Stopped",
+      description: "AI analysis has been deactivated.",
+    });
+  }, [toast]);
 
   // Enhanced AI voice feedback
   const speakFeedback = useCallback((text: string) => {
@@ -164,6 +361,15 @@ export const UltimateFormMonitor: React.FC<UltimateFormMonitorProps> = ({
       speechSynthesis.cancel();
     };
   }, [stopMonitoring]);
+
+  // Start/stop frame processing based on camera state
+  useEffect(() => {
+    if (isCameraActive && isActive && poseRef.current) {
+      processFrame();
+    } else if (animationFrameRef.current) {
+      cancelAnimationFrame(animationFrameRef.current);
+    }
+  }, [isCameraActive, isActive, processFrame]);
 
   // Session statistics
   const sessionStats = useMemo(() => getSessionStats(), [getSessionStats]);

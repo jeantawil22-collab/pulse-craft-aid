@@ -19,6 +19,7 @@ import {
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { UltimateFormMonitor } from '@/components/UltimateFormMonitor';
+import { AIFormCoach } from '@/components/AIFormCoach';
 
 interface WorkoutsProps {
   user: any;
@@ -56,6 +57,8 @@ export const Workouts: React.FC<WorkoutsProps> = ({ user }) => {
   const [workoutTimer, setWorkoutTimer] = useState(0);
   const [restTimer, setRestTimer] = useState(0);
   const [isResting, setIsResting] = useState(false);
+  const [currentFormAnalysis, setCurrentFormAnalysis] = useState<any>(null);
+  const [sessionStats, setSessionStats] = useState<any>(null);
 
   // Sample workout data - would come from AI generation based on user profile
   const [availableWorkouts] = useState<Workout[]>([
@@ -368,10 +371,10 @@ export const Workouts: React.FC<WorkoutsProps> = ({ user }) => {
           </Card>
         )}
 
-            {/* Enhanced Layout with Virtual Trainer */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+            {/* Enhanced Layout with Virtual Trainer and AI Coach */}
+            <div className="grid grid-cols-1 xl:grid-cols-4 gap-6 mb-6">
               {/* Exercise Details */}
-              <Card>
+              <Card className="xl:col-span-1">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-3">
                     <Dumbbell className="h-6 w-6 text-primary" />
@@ -403,7 +406,7 @@ export const Workouts: React.FC<WorkoutsProps> = ({ user }) => {
                           <span className="flex-shrink-0 w-6 h-6 bg-primary text-white rounded-full flex items-center justify-center text-sm font-medium">
                             {index + 1}
                           </span>
-                          <span>{instruction}</span>
+                          <span className="text-sm">{instruction}</span>
                         </li>
                       ))}
                     </ol>
@@ -431,11 +434,13 @@ export const Workouts: React.FC<WorkoutsProps> = ({ user }) => {
               </Card>
 
               {/* Ultimate Form Monitor */}
-              <div className="lg:col-span-2">
+              <div className="xl:col-span-2">
                 <UltimateFormMonitor
                   exerciseName={currentExercise.name}
                   isActive={!isResting}
                   onFormAnalysis={(analysis) => {
+                    setCurrentFormAnalysis(analysis);
+                    
                     // Handle advanced form analysis feedback
                     if (analysis.perfectForm) {
                       toast({
@@ -448,6 +453,39 @@ export const Workouts: React.FC<WorkoutsProps> = ({ user }) => {
                         description: analysis.suggestions[0] || "Small adjustments will make you stronger!",
                         variant: "destructive",
                       });
+                    }
+                  }}
+                />
+              </div>
+
+              {/* AI Form Coach */}
+              <div className="xl:col-span-1">
+                <AIFormCoach
+                  currentAnalysis={currentFormAnalysis}
+                  sessionStats={sessionStats}
+                  exerciseName={currentExercise.name}
+                  onSpeak={(text) => {
+                    // Enhanced text-to-speech with better voices
+                    try {
+                      const utterance = new SpeechSynthesisUtterance(text);
+                      utterance.rate = 0.9;
+                      utterance.pitch = 1.1;
+                      utterance.volume = 0.8;
+                      
+                      // Try to use a more natural voice
+                      const voices = speechSynthesis.getVoices();
+                      const preferredVoice = voices.find(voice => 
+                        voice.name.includes('Google') || 
+                        voice.name.includes('Samantha') ||
+                        voice.name.includes('Alex')
+                      );
+                      if (preferredVoice) {
+                        utterance.voice = preferredVoice;
+                      }
+                      
+                      speechSynthesis.speak(utterance);
+                    } catch (error) {
+                      console.warn('Speech synthesis failed:', error);
                     }
                   }}
                 />

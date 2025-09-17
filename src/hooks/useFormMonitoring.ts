@@ -111,7 +111,7 @@ export const useFormMonitoring = (exerciseName: string) => {
     }
   }, []);
 
-  // Enhanced pose analysis with machine learning principles
+// Enhanced pose analysis with machine learning principles
   const analyzePose = useCallback((landmarks: PoseLandmark[]): FormAnalysis | null => {
     if (!landmarks || landmarks.length < 33) return null;
 
@@ -137,22 +137,41 @@ export const useFormMonitoring = (exerciseName: string) => {
         nose: 0, leftEye: 1, rightEye: 2
       };
 
-      // Calculate visibility confidence
-      const visibilitySum = landmarks.reduce((sum, l) => sum + (l.visibility || 0), 0);
-      const confidence = Math.min((visibilitySum / landmarks.length) * 100, 100);
+      // Calculate visibility confidence with advanced filtering
+      const keyLandmarks = Object.values(landmarkMap).slice(0, 10); // Most important landmarks
+      const visibilitySum = keyLandmarks.reduce((sum, idx) => 
+        sum + (landmarks[idx]?.visibility || 0), 0
+      );
+      const confidence = Math.min((visibilitySum / keyLandmarks.length) * 100, 100);
       confidenceBuffer.current.push(confidence);
       
-      if (confidenceBuffer.current.length > 5) {
+      if (confidenceBuffer.current.length > 10) {
         confidenceBuffer.current.shift();
       }
       
       const avgConfidence = confidenceBuffer.current.reduce((a, b) => a + b, 0) / confidenceBuffer.current.length;
 
-      // Exercise-specific analysis
+      // Early return if confidence is too low
+      if (avgConfidence < 50) {
+        return {
+          score: 0,
+          issues: ['Low visibility detected'],
+          suggestions: ['Ensure good lighting and full body visibility'],
+          angles: {},
+          timestamp: now,
+          perfectForm: false,
+          improvement: 0,
+          confidence: Math.round(avgConfidence)
+        };
+      }
+
+      // Exercise-specific analysis with enhanced precision
       switch (exerciseName) {
         case 'Push-ups':
-          // Left elbow angle
-          if (landmarks[landmarkMap.leftShoulder] && landmarks[landmarkMap.leftElbow] && landmarks[landmarkMap.leftWrist]) {
+          // Left elbow angle with error handling
+          if (landmarks[landmarkMap.leftShoulder]?.visibility > 0.7 && 
+              landmarks[landmarkMap.leftElbow]?.visibility > 0.7 && 
+              landmarks[landmarkMap.leftWrist]?.visibility > 0.7) {
             angles.leftElbow = calculateAngle(
               landmarks[landmarkMap.leftShoulder],
               landmarks[landmarkMap.leftElbow],
@@ -161,7 +180,9 @@ export const useFormMonitoring = (exerciseName: string) => {
           }
 
           // Right elbow angle
-          if (landmarks[landmarkMap.rightShoulder] && landmarks[landmarkMap.rightElbow] && landmarks[landmarkMap.rightWrist]) {
+          if (landmarks[landmarkMap.rightShoulder]?.visibility > 0.7 && 
+              landmarks[landmarkMap.rightElbow]?.visibility > 0.7 && 
+              landmarks[landmarkMap.rightWrist]?.visibility > 0.7) {
             angles.rightElbow = calculateAngle(
               landmarks[landmarkMap.rightShoulder],
               landmarks[landmarkMap.rightElbow],
@@ -169,19 +190,32 @@ export const useFormMonitoring = (exerciseName: string) => {
             );
           }
 
-          // Body alignment
-          if (landmarks[landmarkMap.leftShoulder] && landmarks[landmarkMap.leftHip] && landmarks[landmarkMap.leftAnkle]) {
+          // Body alignment (shoulder-hip-ankle)
+          if (landmarks[landmarkMap.leftShoulder]?.visibility > 0.7 && 
+              landmarks[landmarkMap.leftHip]?.visibility > 0.7 && 
+              landmarks[landmarkMap.leftAnkle]?.visibility > 0.7) {
             angles.bodyAlignment = calculateAngle(
               landmarks[landmarkMap.leftShoulder],
               landmarks[landmarkMap.leftHip],
               landmarks[landmarkMap.leftAnkle]
             );
           }
+
+          // Enhanced form feedback
+          if (angles.leftElbow && angles.rightElbow) {
+            const elbowDiff = Math.abs(angles.leftElbow - angles.rightElbow);
+            if (elbowDiff > 15) {
+              issues.push('Uneven elbow positioning');
+              suggestions.push('Keep both elbows at the same angle');
+            }
+          }
           break;
 
         case 'Squats':
-          // Knee angles
-          if (landmarks[landmarkMap.leftHip] && landmarks[landmarkMap.leftKnee] && landmarks[landmarkMap.leftAnkle]) {
+          // Enhanced squat analysis
+          if (landmarks[landmarkMap.leftHip]?.visibility > 0.7 && 
+              landmarks[landmarkMap.leftKnee]?.visibility > 0.7 && 
+              landmarks[landmarkMap.leftAnkle]?.visibility > 0.7) {
             angles.leftKnee = calculateAngle(
               landmarks[landmarkMap.leftHip],
               landmarks[landmarkMap.leftKnee],
@@ -189,7 +223,9 @@ export const useFormMonitoring = (exerciseName: string) => {
             );
           }
 
-          if (landmarks[landmarkMap.rightHip] && landmarks[landmarkMap.rightKnee] && landmarks[landmarkMap.rightAnkle]) {
+          if (landmarks[landmarkMap.rightHip]?.visibility > 0.7 && 
+              landmarks[landmarkMap.rightKnee]?.visibility > 0.7 && 
+              landmarks[landmarkMap.rightAnkle]?.visibility > 0.7) {
             angles.rightKnee = calculateAngle(
               landmarks[landmarkMap.rightHip],
               landmarks[landmarkMap.rightKnee],
@@ -197,83 +233,107 @@ export const useFormMonitoring = (exerciseName: string) => {
             );
           }
 
-          // Hip hinge angle
-          if (landmarks[landmarkMap.leftShoulder] && landmarks[landmarkMap.leftHip] && landmarks[landmarkMap.leftKnee]) {
+          // Hip hinge analysis
+          if (landmarks[landmarkMap.leftShoulder]?.visibility > 0.7 && 
+              landmarks[landmarkMap.leftHip]?.visibility > 0.7 && 
+              landmarks[landmarkMap.leftKnee]?.visibility > 0.7) {
             angles.hipHinge = calculateAngle(
               landmarks[landmarkMap.leftShoulder],
               landmarks[landmarkMap.leftHip],
               landmarks[landmarkMap.leftKnee]
             );
           }
+
+          // Knee tracking analysis
+          if (angles.leftKnee && angles.rightKnee) {
+            const kneeDiff = Math.abs(angles.leftKnee - angles.rightKnee);
+            if (kneeDiff > 10) {
+              issues.push('Uneven knee depth');
+              suggestions.push('Maintain equal depth on both legs');
+            }
+          }
           break;
 
         case 'Burpees':
-          // Plank alignment
-          if (landmarks[landmarkMap.leftShoulder] && landmarks[landmarkMap.leftHip] && landmarks[landmarkMap.leftAnkle]) {
+          // Multi-phase burpee analysis
+          if (landmarks[landmarkMap.leftShoulder]?.visibility > 0.7 && 
+              landmarks[landmarkMap.leftHip]?.visibility > 0.7 && 
+              landmarks[landmarkMap.leftAnkle]?.visibility > 0.7) {
             angles.plankAlignment = calculateAngle(
               landmarks[landmarkMap.leftShoulder],
               landmarks[landmarkMap.leftHip],
               landmarks[landmarkMap.leftAnkle]
             );
           }
+
+          // Squat depth in burpee
+          if (landmarks[landmarkMap.leftHip]?.visibility > 0.7 && 
+              landmarks[landmarkMap.leftKnee]?.visibility > 0.7 && 
+              landmarks[landmarkMap.leftAnkle]?.visibility > 0.7) {
+            angles.squatDepth = calculateAngle(
+              landmarks[landmarkMap.leftHip],
+              landmarks[landmarkMap.leftKnee],
+              landmarks[landmarkMap.leftAnkle]
+            );
+          }
           break;
       }
 
-      // Calculate precision form score
+      // Calculate precision form score with weighted importance
       const score = calculateFormScore(angles, profile.keyAngles, 
         Object.fromEntries(Object.entries(profile.keyAngles).map(([k, v]) => [k, v.weight]))
       );
 
-      // Generate contextual feedback
+      // Generate advanced contextual feedback
       Object.entries(angles).forEach(([angleName, angleValue]) => {
         const range = profile.keyAngles[angleName];
-        if (range) {
-          if (angleValue < range.min) {
+        if (range && angleValue > 0) {
+          const deviation = angleValue < range.min ? range.min - angleValue : 
+                           angleValue > range.max ? angleValue - range.max : 0;
+          
+          if (deviation > 5) {
             const errorKey = Object.keys(profile.commonErrors).find(key => 
-              key.toLowerCase().includes(angleName.toLowerCase())
+              key.toLowerCase().includes(angleName.toLowerCase()) ||
+              angleName.toLowerCase().includes(key.toLowerCase())
             );
-            if (errorKey) {
-              suggestions.push(profile.commonErrors[errorKey]);
-            }
-          } else if (angleValue > range.max) {
-            const errorKey = Object.keys(profile.commonErrors).find(key => 
-              key.toLowerCase().includes(angleName.toLowerCase())
-            );
-            if (errorKey) {
+            
+            if (errorKey && !suggestions.includes(profile.commonErrors[errorKey])) {
               suggestions.push(profile.commonErrors[errorKey]);
             }
           }
         }
       });
 
-      // Calculate improvement
+      // Calculate improvement trend
       let improvement = 0;
-      if (currentAnalysis) {
-        improvement = score - currentAnalysis.score;
+      if (analysisHistory.current.length > 0) {
+        const recentScores = analysisHistory.current.slice(-5).map(a => a.score);
+        const avgRecent = recentScores.reduce((a, b) => a + b, 0) / recentScores.length;
+        improvement = score - avgRecent;
       }
 
       const analysis: FormAnalysis = {
-        score: Math.round(score),
-        issues,
-        suggestions: [...new Set(suggestions)], // Remove duplicates
+        score: Math.round(Math.max(0, Math.min(100, score))),
+        issues: [...new Set(issues)],
+        suggestions: [...new Set(suggestions)].slice(0, 3), // Limit to top 3 suggestions
         angles,
         timestamp: now,
-        perfectForm: score >= 95 && avgConfidence >= 80,
-        improvement,
+        perfectForm: score >= 95 && avgConfidence >= 85,
+        improvement: Math.round(improvement * 10) / 10,
         confidence: Math.round(avgConfidence)
       };
 
-      // Update history
+      // Update history with size limit
       analysisHistory.current.push(analysis);
       if (analysisHistory.current.length > 100) {
-        analysisHistory.current.shift(); // Keep only last 100 analyses
+        analysisHistory.current.shift();
       }
 
       lastAnalysisTime.current = now;
       return analysis;
 
     } catch (error) {
-      console.error('Form analysis error:', error);
+      console.error('Advanced form analysis error:', error);
       return null;
     }
   }, [exerciseName, calculateAngle, calculateFormScore, currentAnalysis]);
@@ -281,17 +341,39 @@ export const useFormMonitoring = (exerciseName: string) => {
   // Optimized analysis with RAF throttling
   const throttledAnalysis = useRAFThrottle(analyzePose);
 
-  // Session statistics
+  // Session statistics with advanced metrics
   const getSessionStats = useCallback(() => {
     const recent = analysisHistory.current.slice(-50); // Last 50 analyses
     if (recent.length === 0) return null;
 
+    const scores = recent.map(a => a.score);
+    const perfectReps = recent.filter(a => a.perfectForm).length;
+    const averageScore = scores.reduce((sum, score) => sum + score, 0) / scores.length;
+    
+    // Calculate consistency (lower standard deviation = higher consistency)
+    const mean = averageScore;
+    const variance = scores.reduce((sum, score) => sum + Math.pow(score - mean, 2), 0) / scores.length;
+    const consistency = Math.max(0, 100 - Math.sqrt(variance));
+    
+    // Calculate improvement trend over time
+    const firstHalf = recent.slice(0, Math.floor(recent.length / 2));
+    const secondHalf = recent.slice(Math.floor(recent.length / 2));
+    
+    const firstHalfAvg = firstHalf.reduce((sum, a) => sum + a.score, 0) / firstHalf.length;
+    const secondHalfAvg = secondHalf.reduce((sum, a) => sum + a.score, 0) / secondHalf.length;
+    const improvementTrend = secondHalfAvg - firstHalfAvg;
+
     return {
-      averageScore: Math.round(recent.reduce((sum, a) => sum + a.score, 0) / recent.length),
-      perfectFormCount: recent.filter(a => a.perfectForm).length,
-      improvementTrend: recent.length > 1 ? recent[recent.length - 1].score - recent[0].score : 0,
-      consistency: Math.round((1 - (Math.max(...recent.map(a => a.score)) - Math.min(...recent.map(a => a.score))) / 100) * 100),
-      totalAnalyses: recent.length
+      averageScore: Math.round(averageScore),
+      perfectFormCount: perfectReps,
+      improvementTrend: Math.round(improvementTrend * 10) / 10,
+      consistency: Math.round(consistency),
+      totalAnalyses: recent.length,
+      confidenceAverage: Math.round(recent.reduce((sum, a) => sum + a.confidence, 0) / recent.length),
+      bestScore: Math.max(...scores),
+      recentTrend: recent.length > 10 ? 
+        recent.slice(-10).reduce((sum, a) => sum + a.score, 0) / 10 - 
+        recent.slice(-20, -10).reduce((sum, a) => sum + a.score, 0) / 10 : 0
     };
   }, []);
 
